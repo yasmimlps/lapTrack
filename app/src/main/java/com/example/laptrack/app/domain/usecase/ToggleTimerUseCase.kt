@@ -10,7 +10,7 @@ class ToggleTimerUseCase(private val repository: TeamRepository) {
             // Se estava 'true', vira 'false', e vice-versa.
             val updatedTeam = team.copy(isRunning = !team.isRunning)
             // Envia a equipe atualizada para o repositório salvar a alteração.
-            repository.updateTeam(updatedTeam)
+            repository.updateTeamStateInMemory(updatedTeam)
         }
     }
 }

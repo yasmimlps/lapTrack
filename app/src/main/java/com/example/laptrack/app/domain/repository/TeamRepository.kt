@@ -8,4 +8,6 @@ interface TeamRepository{
     suspend fun addTeam(team: String)
     suspend fun updateTeam(team: Team)
     suspend fun getTeamById(teamId: Long): Team?
+    suspend fun updateTeamStateInMemory(team: Team)
+    suspend fun updateCurrentLapTime(teamId: Long, elapsed: Long)
 }

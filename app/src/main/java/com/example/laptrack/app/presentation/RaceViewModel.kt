@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.laptrack.app.data.repository.TeamRepositoryImpl
 import com.example.laptrack.app.data.source.local.TeamLocalDataSource
+import com.example.laptrack.app.data.source.remote.GoogleSheetDataSource
 import com.example.laptrack.app.domain.model.Team
 import com.example.laptrack.app.domain.repository.TeamRepository
 import com.example.laptrack.app.domain.usecase.AddLapUseCase
@@ -28,30 +29,25 @@ class RaceViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: TeamRepository
     private val teamUseCases: TeamUseCases
 
-    // StateFlow para expor o estado da UI de forma segura.
     private val _uiState = MutableStateFlow(RaceUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        // --- Injeção de Dependência Manual ---
         val dataSource = TeamLocalDataSource(application)
-        repository = TeamRepositoryImpl(dataSource)
+        val remoteDataSource = GoogleSheetDataSource()
+        repository = TeamRepositoryImpl(dataSource, remoteDataSource)
         teamUseCases = TeamUseCases(
             addLap = AddLapUseCase(repository),
             toggleTimer = ToggleTimerUseCase(repository),
             updateLapTime = UpdateLapTimeUseCase(repository),
             finishedTeam = FinishTeamUseCase(repository),
         )
-        // --- Fim da Injeção ---
 
-        // Observa o fluxo de equipes do repositório e atualiza o estado da UI.
         repository.getTeams().onEach { teams ->
-            Log.d("RaceViewModel", "Nova lista de equipes coletada. Tamanho: ${teams.size}")
             _uiState.value = _uiState.value.copy(teams = teams)
         }.launchIn(viewModelScope)
     }
 
-    // --- Funções para manipular eventos da UI ---
 
     fun onAddLap(teamId: Long) = viewModelScope.launch {
         teamUseCases.addLap(teamId)
@@ -76,7 +72,6 @@ class RaceViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(showAddTeamDialog = false)
     }
 
-    // A lógica de adicionar uma equipe é simples, então chamamos o repositório diretamente.
     fun onConfirmTeam(name: String) {
         if (name.isNotBlank()) {
             viewModelScope.launch {

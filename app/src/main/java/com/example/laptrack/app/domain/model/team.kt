@@ -1,5 +1,7 @@
 package com.example.laptrack.app.domain.model
 
+import kotlinx.serialization.Serializable
+@Serializable
 data class Team(
     val id: Long = System.currentTimeMillis(),
     val name: String,
