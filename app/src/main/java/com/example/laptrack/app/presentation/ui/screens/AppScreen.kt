@@ -16,7 +16,6 @@ fun AppScreen(
     state: RaceUiState,
     onAddLap: (Long) -> Unit,
     onToggleTimer: (Long) -> Unit,
-    onUpdateTime: (Long, Long) -> Unit,
     onFinishTeam: (Long) -> Unit,
     onAddTeamClicked: () -> Unit,
     onDismissDialog: () -> Unit,
@@ -31,7 +30,7 @@ fun AppScreen(
             teams = state.teams,
             onAddLap = onAddLap,
             onToggleTimer = onToggleTimer,
-            onUpdateTime = onUpdateTime,
+
             onFinishTeam = onFinishTeam,
             modifier = Modifier.padding(paddingValues)
         )

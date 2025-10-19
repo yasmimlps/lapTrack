@@ -1,5 +1,6 @@
 package com.example.laptrack.app.data.repository
 
+import android.content.Context
 import android.util.Log
 import com.example.laptrack.app.data.source.local.TeamLocalDataSource
 import com.example.laptrack.app.data.source.remote.GoogleSheetDataSource
@@ -34,33 +35,63 @@ class TeamRepositoryImpl (private val localDataSource: TeamLocalDataSource, priv
     }
 
     override suspend fun updateTeam(team: Team) {
-        val currentTeams = _teams.value.toMutableList()
-        val index = currentTeams.indexOfFirst { it.id == team.id }
-        if(index != -1){
-            currentTeams[index] = team
-            localDataSource.saveTeams(currentTeams)
-            _teams.value = currentTeams
-            remoteDataSource.syncTeam(team)
-        }
+        val updatedTeams = _teams.value.map { if (it.id == team.id) team else it }
+        localDataSource.saveTeams(updatedTeams)
+        _teams.value = updatedTeams
+        remoteDataSource.syncTeam(team)
     }
 
     override suspend fun updateTeamStateInMemory(team: Team) {
-        val currentTeams = _teams.value.toMutableList()
-        val index = currentTeams.indexOfFirst { it.id == team.id }
-        if(index != -1){
-            currentTeams[index] = team
-            _teams.value = currentTeams
-        }
+        val updatedTeams = _teams.value.map { if (it.id == team.id) team else it }
+        _teams.value = updatedTeams
     }
 
-    override suspend fun updateCurrentLapTime(teamId: Long, elapsed: Long) {
-        val currentTeams = _teams.value.toMutableList()
-        val index = currentTeams.indexOfFirst { it.id == teamId }
-        if (index != -1) {
-            val team = currentTeams[index]
-            val updatedTeam = team.copy(currentLapTimeInMillis = team.currentLapTimeInMillis + elapsed)
-            currentTeams[index] = updatedTeam
-            _teams.value = currentTeams
+    override suspend fun updateAllRunningTimers(elapsed: Long) {
+        val updatedTeams = _teams.value.map { team ->
+            if (team.isRunning) {
+                team.copy(currentLapTimeInMillis = team.currentLapTimeInMillis + elapsed)
+            } else {
+                team
+            }
+        }
+        _teams.value = updatedTeams
+        Log.d("TeamRepositoryImpl", "Timers atualizados. A primeira equipe correndo tem o tempo: ${updatedTeams.find { it.isRunning }?.currentLapTimeInMillis}")
+
+    }
+
+    override suspend fun recordLap(teamId: Long) {
+        val team = getTeamById(teamId) ?: return
+
+        val teamStateForSheet = team.copy(
+            laps = team.laps + 1,
+            totalTimeInMillis = team.totalTimeInMillis + team.currentLapTimeInMillis,
+            isRunning = true
+        )
+        val newTeamStateForApp = teamStateForSheet.copy(currentLapTimeInMillis = 0L)
+
+        val updatedTeamsForApp = _teams.value.map {
+            if (it.id == teamId) newTeamStateForApp else it
+        }
+
+        localDataSource.saveTeams(updatedTeamsForApp)
+        _teams.value = updatedTeamsForApp
+        remoteDataSource.syncTeam(teamStateForSheet)
+    }
+
+    companion object {
+        @Volatile
+        private var INSTANCE: TeamRepository? = null
+
+        fun getInstance(context: Context): TeamRepository {
+            return INSTANCE ?: synchronized(this) {
+
+                val instance = TeamRepositoryImpl(
+                    TeamLocalDataSource(context.applicationContext),
+                    GoogleSheetDataSource()
+                )
+                INSTANCE = instance
+                instance
+            }
         }
     }
 

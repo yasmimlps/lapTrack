@@ -21,25 +21,14 @@ fun TeamCard(
     team: Team,
     onAddLap: () -> Unit,
     onToggleTimer: () -> Unit,
-    onUpdateTime: (Long) -> Unit,
-    onFinishTeam: () -> Unit // Parâmetro para o novo botão
+    onFinishTeam: () -> Unit
+    // O parâmetro onUpdateTime foi removido
 ) {
     val isEnabled = !team.isFinished
     val alpha: Float by animateFloatAsState(if (isEnabled) 1f else 0.6f, label = "")
 
-    // Efeito para o cronômetro da volta
-    LaunchedEffect(key1 = team.isRunning, key2 = team.id) {
-        if (team.isRunning) {
-            var lastTime = System.currentTimeMillis()
-            while (true) {
-                delay(10) // Atualiza a cada 10ms
-                val currentTime = System.currentTimeMillis()
-                val elapsed = currentTime - lastTime
-                onUpdateTime(elapsed)
-                lastTime = currentTime
-            }
-        }
-    }
+    // O LaunchedEffect foi completamente removido daqui.
+    // O serviço em segundo plano agora é responsável por atualizar o tempo.
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -90,7 +79,7 @@ fun TeamCard(
                 }
             }
 
-            // Seção dos novos botões, só aparece se a equipe não estiver finalizada
+            // Seção dos botões de Pausar e Finalizar
             AnimatedVisibility(visible = isEnabled) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
@@ -102,7 +91,7 @@ fun TeamCard(
                         onClick = onToggleTimer,
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(if (team.isRunning) "Pausar" else "Retomar")
+                        Text(if (team.isRunning) "Pausar" else "Iniciar")
                     }
                     // Botão de Finalizar
                     TextButton(onClick = onFinishTeam) {

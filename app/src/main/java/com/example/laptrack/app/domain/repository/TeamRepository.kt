@@ -9,5 +9,7 @@ interface TeamRepository{
     suspend fun updateTeam(team: Team)
     suspend fun getTeamById(teamId: Long): Team?
     suspend fun updateTeamStateInMemory(team: Team)
-    suspend fun updateCurrentLapTime(teamId: Long, elapsed: Long)
+    //suspend fun updateCurrentLapTime(teamId: Long, elapsed: Long)
+    suspend fun recordLap(teamId: Long)
+    suspend fun updateAllRunningTimers(elapsed: Long)
 }

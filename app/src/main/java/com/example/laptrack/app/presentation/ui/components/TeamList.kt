@@ -21,7 +21,6 @@ fun TeamList(
     teams: List<Team>,
     onAddLap: (Long) -> Unit,
     onToggleTimer: (Long) -> Unit,
-    onUpdateTime: (Long, Long) -> Unit, // Parâmetro adicionado
     onFinishTeam: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -48,7 +47,6 @@ fun TeamList(
                     team = team,
                     onAddLap = { onAddLap(team.id) },
                     onToggleTimer = { onToggleTimer(team.id) },
-                    onUpdateTime = { elapsed -> onUpdateTime(team.id, elapsed) } ,
                     onFinishTeam = { onFinishTeam(team.id) }
                 )
             }
