@@ -17,20 +17,21 @@ fun AppScreen(
     onAddLap: (Long) -> Unit,
     onToggleTimer: (Long) -> Unit,
     onFinishTeam: (Long) -> Unit,
+    onStartRace: () -> Unit,
+    onStopRace:  () -> Unit,
     onAddTeamClicked: () -> Unit,
     onDismissDialog: () -> Unit,
     onConfirmTeam: (String) -> Unit
 ) {
     Scaffold(
         topBar = { AppHeader() },
-        bottomBar = { AppFooter(onAddTeamClick = onAddTeamClicked) },
+        bottomBar = { AppFooter(isRaceInProgress = state.isRaceInProgress, onStartRace = onStartRace, onStopRace = onStopRace , onAddTeamClick = onAddTeamClicked) },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         TeamList(
             teams = state.teams,
             onAddLap = onAddLap,
             onToggleTimer = onToggleTimer,
-
             onFinishTeam = onFinishTeam,
             modifier = Modifier.padding(paddingValues)
         )

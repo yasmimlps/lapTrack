@@ -86,14 +86,6 @@ fun TeamCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Botão de Pausar/Retomar
-                    OutlinedButton(
-                        onClick = onToggleTimer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(if (team.isRunning) "Pausar" else "Iniciar")
-                    }
-                    // Botão de Finalizar
                     TextButton(onClick = onFinishTeam) {
                         Text("Finalizar", color = MaterialTheme.colorScheme.error)
                     }

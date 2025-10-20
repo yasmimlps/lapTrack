@@ -14,8 +14,6 @@ import kotlinx.serialization.json.Json
 
 class GoogleSheetDataSource {
 
-    // --- IMPORTANTE ---
-    // Cole a URL do seu App da Web do Google Apps Script aqui.
     private val scriptUrl = "https://script.google.com/macros/s/AKfycbzPQRCTDpJ9uykC6Yu71l4R-frTnUAN3p8n5bfYqLuDv9HtpHjxX-mKEKkMd_6DGyYY/exec"
     private val client = HttpClient(OkHttp) {
         install(ContentNegotiation) {

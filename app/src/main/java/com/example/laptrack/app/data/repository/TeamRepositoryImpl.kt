@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 
-class TeamRepositoryImpl (private val localDataSource: TeamLocalDataSource, private val remoteDataSource: GoogleSheetDataSource) : TeamRepository {
+class TeamRepositoryImpl (private val localDataSource: TeamLocalDataSource,
+                          private val remoteDataSource: GoogleSheetDataSource) : TeamRepository {
 
     private val TAG = "TeamRepositoryImpl"
 
@@ -76,6 +77,28 @@ class TeamRepositoryImpl (private val localDataSource: TeamLocalDataSource, priv
         localDataSource.saveTeams(updatedTeamsForApp)
         _teams.value = updatedTeamsForApp
         remoteDataSource.syncTeam(teamStateForSheet)
+    }
+
+    override suspend fun startAllTimers() {
+        val teamsToUpdate = _teams.value.filter { !it.isFinished && !it.isRunning }
+        if (teamsToUpdate.isEmpty()) return
+
+        val updatedTeams = _teams.value.map {
+            if (!it.isFinished) it.copy(isRunning = true) else it
+        }
+        localDataSource.saveTeams(updatedTeams)
+        _teams.value = updatedTeams
+        teamsToUpdate.forEach { remoteDataSource.syncTeam(it.copy(isRunning = true)) }
+    }
+
+    override suspend fun stopAllTimers() {
+        val teamsToUpdate = _teams.value.filter { it.isRunning }
+        if (teamsToUpdate.isEmpty()) return
+
+        val updatedTeams = _teams.value.map { it.copy(isRunning = false) }
+        localDataSource.saveTeams(updatedTeams)
+        _teams.value = updatedTeams
+        teamsToUpdate.forEach { remoteDataSource.syncTeam(it.copy(isRunning = false)) }
     }
 
     companion object {

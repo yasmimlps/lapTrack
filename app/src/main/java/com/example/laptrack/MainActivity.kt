@@ -26,26 +26,17 @@ import com.example.laptrack.app.presentation.ui.theme.AppTheme
 class MainActivity : ComponentActivity() {
     private val viewModel: RaceViewModel by viewModels()
 
-    // Lançador para o pedido de permissão de notificação.
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            // Se a permissão for negada, exibe uma mensagem informativa.
-            Toast.makeText(
-                this,
-                "A permissão para notificações é necessária para que o cronómetro funcione em segundo plano.",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, "A permissão de notificação é necessária para que o cronômetro funcione em segundo plano.", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun askNotificationPermission() {
-        // A permissão só é necessária no Android 13 (Tiramisu) ou superior.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Verifica se a permissão ainda não foi concedida.
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // Lança o pedido de permissão.
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
@@ -54,7 +45,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Pede a permissão assim que a atividade é criada.
         askNotificationPermission()
 
         setContent {
@@ -69,6 +59,8 @@ class MainActivity : ComponentActivity() {
                         onAddLap = viewModel::onAddLap,
                         onToggleTimer = viewModel::onToggleTimer,
                         onFinishTeam = viewModel::onFinishTeam,
+                        onStartRace = viewModel::onStartRace,
+                        onStopRace = viewModel::onStopRace,
                         onAddTeamClicked = viewModel::onAddTeamClicked,
                         onDismissDialog = viewModel::onDismissDialog,
                         onConfirmTeam = viewModel::onConfirmTeam
@@ -87,10 +79,11 @@ fun AppCapKaraNav(
     onAddLap: (Long) -> Unit,
     onToggleTimer: (Long) -> Unit,
     onFinishTeam: (Long) -> Unit,
+    onStartRace: () -> Unit,
+    onStopRace: () -> Unit,
     onAddTeamClicked: () -> Unit,
     onDismissDialog: () -> Unit,
     onConfirmTeam: (String) -> Unit
-    // O onUpdateTime foi removido da assinatura da função.
 ) {
     var currentScreen by remember { mutableStateOf(Screen.Home) }
 
@@ -105,10 +98,11 @@ fun AppCapKaraNav(
                 onAddLap = onAddLap,
                 onToggleTimer = onToggleTimer,
                 onFinishTeam = onFinishTeam,
+                onStartRace = onStartRace,
+                onStopRace = onStopRace,
                 onAddTeamClicked = onAddTeamClicked,
                 onDismissDialog = onDismissDialog,
                 onConfirmTeam = onConfirmTeam
-                // O onUpdateTime foi removido daqui.
             )
         }
     }

@@ -12,6 +12,8 @@ import com.example.laptrack.app.domain.usecase.AddLapUseCase
 import com.example.laptrack.app.domain.usecase.TeamUseCases
 import com.example.laptrack.app.domain.usecase.ToggleTimerUseCase
 import com.example.laptrack.app.domain.usecase.FinishTeamUseCase
+import com.example.laptrack.app.domain.usecase.StartAllTimersUseCase
+import com.example.laptrack.app.domain.usecase.StopAllTimersUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -20,7 +22,9 @@ import kotlinx.coroutines.launch
 
 data class RaceUiState(
     val teams: List<Team> = emptyList(),
-    val showAddTeamDialog: Boolean = false
+    val showAddTeamDialog: Boolean = false,
+    // Novo estado para controlar o botão global
+    val isRaceInProgress: Boolean = false
 )
 
 class RaceViewModel(application: Application) : AndroidViewModel(application) {
@@ -36,33 +40,46 @@ class RaceViewModel(application: Application) : AndroidViewModel(application) {
         teamUseCases = TeamUseCases(
             addLap = AddLapUseCase(repository),
             toggleTimer = ToggleTimerUseCase(repository),
-            finishedTeam = FinishTeamUseCase(repository)
+            finishedTeam = FinishTeamUseCase(repository),
+            startAllTimers = StartAllTimersUseCase(repository),
+            stopAllTimers = StopAllTimersUseCase(repository)
         )
 
         repository.getTeams().onEach { teams ->
+            // Calcula o estado da corrida
+            val isRaceInProgress = teams.any { it.isRunning }
             Log.d("RaceViewModel", "Recebida nova lista de equipes. A primeira equipe correndo tem o tempo: ${teams.find { it.isRunning }?.currentLapTimeInMillis}")
-            _uiState.value = _uiState.value.copy(teams = teams)
+            _uiState.value = _uiState.value.copy(
+                teams = teams,
+                isRaceInProgress = isRaceInProgress
+            )
         }.launchIn(viewModelScope)
     }
 
-    // LÓGICA SIMPLIFICADA E MAIS ROBUSTA
     fun onToggleTimer(teamId: Long) = viewModelScope.launch {
-        // 1. Altera o estado da equipe (Pausar/Retomar)
         teamUseCases.toggleTimer(teamId)
-
-        // 2. Apenas garante que o serviço seja iniciado.
-        // Se já estiver rodando, não há problema. Se não estiver, ele começará.
-        // A lógica para parar o serviço agora está dentro do próprio serviço, que é mais confiável.
         Log.d("RaceViewModel", "Garantindo que o serviço de cronômetro está iniciado.")
         val intent = Intent(getApplication(), RaceTimerService::class.java)
         getApplication<Application>().startService(intent)
+    }
+
+    // Novas funções para os botões globais
+    fun onStartRace() = viewModelScope.launch {
+        teamUseCases.startAllTimers()
+        Log.d("RaceViewModel", "Iniciando o serviço de cronômetro (Global Start).")
+        val intent = Intent(getApplication(), RaceTimerService::class.java)
+        getApplication<Application>().startService(intent)
+    }
+
+    fun onStopRace() = viewModelScope.launch {
+        teamUseCases.stopAllTimers()
+        Log.d("RaceViewModel", "Todos os cronômetros parados. O serviço irá parar por conta própria.")
     }
 
     fun onAddLap(teamId: Long) = viewModelScope.launch { teamUseCases.addLap(teamId) }
 
     fun onFinishTeam(teamId: Long) = viewModelScope.launch {
         teamUseCases.finishedTeam(teamId)
-        // Após finalizar, também garantimos que o serviço verifique seu estado.
         val intent = Intent(getApplication(), RaceTimerService::class.java)
         getApplication<Application>().startService(intent)
     }
