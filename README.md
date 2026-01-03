@@ -1,5 +1,5 @@
 # lapTrack
-Welcome to the LapTrack Flutter App repository!
+Welcome to the LapTrack App repository!
 
 LapTrack is a mobile application designed to simplify lap counting in the Endurance race of Baja SAE competitions. With LapTrack, you can easily record the number of laps each car completed, monitor the performance of each lap, and plan the best strategies for the team, including accurate predictions of when to refuel.
 
